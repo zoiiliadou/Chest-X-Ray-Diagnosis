@@ -2,11 +2,7 @@
 
 **Live Application:** [https://medicalaitech-chest-x-ray-diagnosis.hf.space](https://medicalaitech-chest-x-ray-diagnosis.hf.space)
 
-![Python](https://img.shields.io/badge/Python-3.12-blue.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100.0-009688.svg)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15.0-FF6F00.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+
 
 A professional-grade, AI-powered medical diagnostic web application designed to assist radiologists and medical professionals in detecting Pneumonia from Chest X-Ray images, supporting both standard image formats and native DICOM files. The system utilizes a fine-tuned MobileNetV2 architecture with Transfer Learning and provides Explainable AI (XAI) features via Grad-CAM heatmaps for enhanced clinical transparency.
 
