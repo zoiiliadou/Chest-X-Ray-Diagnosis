@@ -48,7 +48,7 @@ pip install -r requirements.txt
 ```bash
 uvicorn main:app --reload
 ```
-The local server will instantiate at `http://localhost:8000`.
+Access the application at http://localhost:8000
 
 ## Docker Deployment
 
