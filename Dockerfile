@@ -1,24 +1,24 @@
-# Επιλέγουμε τη standard έκδοση της Python 3.12
+# Use the standard slim Python 3.12 image for optimized container size
 FROM python:3.12-slim
 
-# Το Hugging Face Spaces απαιτεί η εφαρμογή να τρέχει από τον χρήστη 'user' (uid 1000)
+# Hugging Face Spaces mandates applications to run under a non-root 'user' with UID 1000
 RUN useradd -m -u 1000 user
 USER user
 
-# Ρύθμιση μεταβλητών περιβάλλοντος για τη σωστή εκτέλεση
+# Configure environment variables for local bin execution path
 ENV HOME=/home/user \
     PATH=/home/user/.local/bin:$PATH
 
-# Ορισμός του φακέλου εργασίας (εδώ θα βρίσκεται όλος ο κώδικας)
+# Set the working directory for the application runtime
 WORKDIR $HOME/app
 
-# Αντιγραφή του αρχείου βιβλιοθηκών και εγκατάστασή τους
+# Transfer dependency specifications and install them without caching to minimize image bloat
 COPY --chown=user requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Αντιγραφή όλου του υπόλοιπου κώδικα της εφαρμογής (main.py, models, templates, κλπ)
+# Synchronize the remaining application codebase
 COPY --chown=user . .
 
-# Το Hugging Face Spaces τρέχει ΑΠΟΚΛΕΙΣΤΙΚΑ στην πόρτα (port) 7860
+# Expose and bind the FastAPI interface to port 7860 (Hugging Face standard)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
