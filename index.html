@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pneumonia Diagnostic Tool</title>
+    <!-- Google Fonts for professional typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for medical icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #0F52BA;
+            --light-blue: #E8F0FE;
+            --success-green: #0F8243;
+            --light-green: #E6F4EA;
+            --error-red: #D93025;
+            --light-red: #FCE8E6;
+            --text-dark: #202124;
+            --text-gray: #5F6368;
+            --bg-gray: #F8F9FA;
+            --border-gray: #DADCE0;
+            --radius-soft: 12px;
+            --shadow-subtle: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-gray);
+            margin: 0;
+            padding: 0;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-gray);
+            padding: 20px 0;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.05);
+        }
+
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .medical-icon {
+            color: var(--primary-blue);
+            font-size: 28px;
+        }
+
+        h1 {
+            color: var(--primary-blue);
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-gray);
+            font-size: 15px;
+            margin-top: 5px;
+            font-weight: 400;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius-soft);
+            box-shadow: var(--shadow-subtle);
+            padding: 40px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border-gray);
+            transition: all 0.3s ease;
+        }
+
+        .upload-section {
+            text-align: center;
+            border: 2px dashed var(--border-gray);
+            border-radius: var(--radius-soft);
+            padding: 40px 20px;
+            background-color: #FAFAFA;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-section:hover, .upload-section.dragover {
+            border-color: var(--primary-blue);
+            background-color: var(--light-blue);
+        }
+
+        .upload-icon {
+            font-size: 40px;
+            color: var(--primary-blue);
+            margin-bottom: 15px;
+            opacity: 0.8;
+        }
+
+        .upload-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0 0 8px 0;
+        }
+
+        .upload-subtitle {
+            font-size: 14px;
+            color: var(--text-gray);
+            margin: 0 0 20px 0;
+        }
+
+        /* Custom File Input Styling */
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(15, 82, 186, 0.2);
+        }
+
+        .btn:hover {
+            background-color: #0c439c;
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            background-color: #A0BCEB;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .selected-file-name {
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--primary-blue);
+            font-weight: 500;
+            display: none;
+        }
+
+        /* Results Section Styling */
+        #resultCard {
+            display: none;
+            text-align: center;
+            transform: translateY(10px);
+            opacity: 0;
+            animation: slideUpFade 0.4s forwards;
+        }
+
+        @keyframes slideUpFade {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .result-image-container {
+            position: relative;
+            max-width: 350px;
+            margin: 0 auto 30px auto;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+            border: 1px solid var(--border-gray);
+        }
+
+        .analyzed-image {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .diagnosis-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .diagnosis-text {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+        }
+
+        /* Confidence Progress Bar */
+        .confidence-container {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .progress-bar-bg {
+            height: 10px;
+            background-color: var(--border-gray);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0%;
+        }
+
+        /* Alert Styling */
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 20px;
+            border-radius: var(--radius-soft);
+            text-align: left;
+        }
+
+        .alert-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .alert-content h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        .alert-content p {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        /* Pneumonia Styles */
+        .is-pneumonia .diagnosis-badge { background-color: var(--light-red); color: var(--error-red); }
+        .is-pneumonia .diagnosis-text { color: var(--error-red); }
+        .is-pneumonia .progress-bar-fill { background-color: var(--error-red); }
+
+        /* Normal Styles */
+        .is-normal .diagnosis-badge { background-color: var(--light-green); color: var(--success-green); }
+        .is-normal .diagnosis-text { color: var(--success-green); }
+        .is-normal .progress-bar-fill { background-color: var(--success-green); }
+
+        /* Error Styles */
+        .is-error {
+            background-color: var(--light-red);
+            border: 1px solid rgba(217, 48, 37, 0.3);
+        }
+        .is-error .alert-icon, .is-error h3 { color: var(--error-red); }
+        .is-error p { color: #8A150D; }
+
+        /* Loader */
+        .loader-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--light-blue);
+            border-top: 4px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loader-text {
+            color: var(--primary-blue);
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-bottom: 20px;
+            color: var(--text-gray);
+            font-size: 13px;
+        }
+
+        /* History Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--radius-soft);
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            animation: slideUpFade 0.3s forwards;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-gray);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--primary-blue);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-gray);
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--error-red);
+        }
+
+        .modal-body {
+            padding: 0;
+            overflow-y: auto;
+        }
+
+        /* Table */
+        table.history-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .history-table th {
+            background-color: var(--bg-gray);
+            padding: 12px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-gray);
+            border-bottom: 2px solid var(--border-gray);
+            position: sticky;
+            top: 0;
+        }
+
+        .history-table td {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-gray);
+            font-size: 14px;
+        }
+
+        .history-table tr:hover {
+            background-color: var(--light-blue);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-danger { background-color: var(--light-red); color: var(--error-red); }
+        .status-safe { background-color: var(--light-green); color: var(--success-green); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-content" style="position: relative;">
+            <div>
+                <h1>Σύστημα Ανάλυσης Ακτινογραφίας</h1>
+                <div class="subtitle">ΑΙ Υποβοήθηση Διάγνωσης Πνευμονίας</div>
+            </div>
+            
+            <button onclick="toggleHistoryModal()" class="btn" style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); background-color: white; color: var(--primary-blue); border: 1px solid var(--border-gray); padding: 8px 16px; font-size: 14px;">
+                <i class="fa-solid fa-list-check"></i> Ιστορικό
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- Upload Section -->
+        <div class="card">
+            <div class="upload-section" id="dropZone" onclick="document.getElementById('imageInput').click()">
+                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                <h3 class="upload-title">Επιλογή Ακτινογραφίας Θώρακος</h3>
+                <p class="upload-subtitle">Υποστηριζόμενα αρχεία: .jpg, .png</p>
+                
+                <input type="file" id="imageInput" accept="image/jpeg, image/png" onchange="handleFileSelect()">
+                
+                <div id="selectedFileName" class="selected-file-name">
+                    <i class="fa-regular fa-image"></i> <span id="fileNameText">επιλεγμένο αρχείο</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="analyzeBtn" class="btn" onclick="uploadImage()" disabled>
+                    <i class="fa-solid fa-microscope"></i> Έναρξη Ανάλυσης
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultCard" class="card">
+            <!-- Content injected via JS -->
+        </div>
+
+        <!-- DICOM Section -->
+        <div class="card" style="border: 1.5px solid #2a3f5f; background: linear-gradient(135deg, #1a2a3a 0%, #0f1b2a 100%); margin-top: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+                <i class="fa-solid fa-file-waveform" style="font-size: 22px; color: #5bc0de;"></i>
+                <div>
+                    <h2 style="margin: 0; color: #e8f4f8; font-size: 18px; font-weight: 600;">DICOM Medical File Analysis</h2>
+                    <p style="margin: 2px 0 0 0; font-size: 13px; color: #8ab4c8;">Native hospital imaging format (.dcm) — Industry Standard</p>
+                </div>
+                <span style="margin-left: auto; background: #1a4a6a; color: #5bc0de; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; border: 1px solid #5bc0de;">BETA</span>
+            </div>
+
+            <div style="border-top: 1px solid #2a4a6a; margin: 15px 0;"></div>
+
+            <div id="dicomDropZone"
+                 onclick="document.getElementById('dicomInput').click()"
+                 style="border: 2px dashed #3a6a8a; border-radius: 10px; padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: rgba(91,192,222,0.05);"
+                 ondragover="event.preventDefault(); this.style.borderColor='#5bc0de'; this.style.background='rgba(91,192,222,0.12)';"
+                 ondragleave="this.style.borderColor='#3a6a8a'; this.style.background='rgba(91,192,222,0.05)';"
+                 ondrop="event.preventDefault(); this.style.borderColor='#3a6a8a'; this.style.background='rgba(91,192,222,0.05)'; if(event.dataTransfer.files.length){ document.getElementById('dicomInput').files = event.dataTransfer.files; handleDicomSelect(); }">
+                <i class="fa-solid fa-stethoscope" style="font-size: 32px; color: #5bc0de; margin-bottom: 12px; display: block;"></i>
+                <div style="color: #c8dce8; font-weight: 600; font-size: 15px; margin-bottom: 5px;">Drop DICOM File Here</div>
+                <div style="color: #6a9ab0; font-size: 13px;">Supported: .dcm (DICOM 3.0)</div>
+                <input type="file" id="dicomInput" accept=".dcm,application/dicom" style="display:none;" onchange="handleDicomSelect()">
+                <div id="dicomFileName" style="margin-top: 12px; font-size: 13px; color: #5bc0de; font-weight: 500; display: none;">
+                    <i class="fa-solid fa-file-medical"></i> <span id="dicomFileNameText"></span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="dicomAnalyzeBtn" onclick="uploadDicom()"
+                        disabled
+                        style="background: linear-gradient(90deg, #1a5a8a, #1a8a7a); color: white; border: none; padding: 12px 28px; font-size: 15px; font-weight: 500; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 10px; opacity: 0.5;">
+                    <i class="fa-solid fa-radiation"></i> Analyse DICOM File
+                </button>
+            </div>
+
+            <!-- DICOM Metadata Panel (hidden by default) -->
+            <div id="dicomMetaPanel" style="display: none; margin-top: 20px; border: 1px solid #2a4a6a; border-radius: 8px; padding: 15px; background: rgba(255,255,255,0.03);">
+                <div style="font-size: 13px; font-weight: 700; color: #5bc0de; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">
+                    <i class="fa-solid fa-id-card"></i> DICOM Header Metadata
+                </div>
+                <div id="dicomMetaContent" style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;"></div>
+            </div>
+
+            <!-- DICOM Result Panel (hidden by default) -->
+            <div id="dicomResultPanel" style="display: none; margin-top: 20px;"></div>
+        </div>
+
+    </div>
+
+    <!-- Full screen loader -->
+    <div class="loader-overlay" id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">Επεξεργασία & AI Ανάλυση ιατρικής εικόνας...</div>
+    </div>
+
+    <footer>
+        <p>Το παρόν εργαλείο προορίζεται αποκλειστικά για ερευνητικούς - υποστηρικτικούς σκοπούς<br>και δεν υποκαθιστά την ιατρική γνωμάτευση.</p>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-lock" style="color: var(--text-gray);"></i> Έλεγχος Πρόσβασης</h2>
+                <button class="modal-close" onclick="closeAuthModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body" style="padding: 30px;">
+                <i class="fa-solid fa-user-doctor" style="font-size: 40px; color: var(--primary-blue); margin-bottom: 20px;"></i>
+                <h3 style="margin-top: 0;">Διαβαθμισμένα Δεδομένα</h3>
+                <p style="font-size: 14px; color: var(--text-gray); margin-bottom: 20px;">Η πρόσβαση στο Ιστορικό επιτρέπεται μόνο σε εξουσιοδοτημένο Ιατρικό Προσωπικό.</p>
+                
+                <input type="password" id="doctorPin" placeholder="Εισάγετε το 4-ψήφιο PIN" onkeydown="if(event.key === 'Enter') submitPin()" style="width: 100%; box-sizing: border-box; padding: 12px; border-radius: 8px; border: 1px solid var(--border-gray); margin-bottom: 8px; font-size: 16px; text-align: center; letter-spacing: 2px;">
+                <div id="pinError" style="color: var(--error-red); font-size: 13px; margin-bottom: 15px; display: none;">Λάθος Κωδικός. Δοκιμάστε ξανά.</div>
+                
+                <button class="btn" style="width: 100%; justify-content: center;" onclick="submitPin()">Ξεκλείδωμα Ιστορικού</button>
+                <div style="margin-top: 20px; font-size: 12px; color: var(--text-gray);">Σημείωση για αξιολογητές: Demo PIN = <strong>1234</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-list-check"></i> Ιστορικό Εξετάσεων Ασθενών</h2>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button id="clearHistoryBtn" onclick="clearHistory()" style="background: var(--error-red); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: opacity 0.2s;">
+                        <i class="fa-solid fa-trash-can"></i> Διαγραφή Όλων
+                    </button>
+                    <button class="modal-close" onclick="toggleHistoryModal()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>ΗΜΕΡΟΜΗΝΙΑ</th>
+                            <th>ΑΡΧΕΙΟ</th>
+                            <th>ΠΟΡΙΣΜΑ</th>
+                            <th>ΣΙΓΟΥΡΙΑ ΑΙ</th>
+                            <th>HEATMAP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Γεμίζει δυναμικά -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden PDF Template -->
+    <div style="position: absolute; left: -9999px; top: 0; width: 800px; background: white;">
+        <div id="pdfTemplate" style="padding: 40px; padding-bottom: 60px; font-family: 'Inter', sans-serif; color: #333; background: white; width: 100%;">
+            <div style="border-bottom: 2px solid #204051; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="color: #204051; margin: 0; font-size: 24px;">Chest X-Ray AI Diagnostic</h1>
+                    <div style="color: #6c757d; font-size: 14px; margin-top: 5px;">Αφορά Αυτοματοποιημένη Ανάλυση Δεδομένων & Απεικόνισης</div>
+                </div>
+                <div style="text-align: right; font-size: 12px; color: #6c757d; line-height: 1.5;">
+                    <div><strong>Ημερομηνία:</strong> <span id="pdfDate"></span></div>
+                    <div><strong>Αρχείο:</strong> <span id="pdfFilename"></span></div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef;">
+                <h2 style="margin-top: 0; font-size: 14px; color: #6c757d; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Πόρισμα Τεχνητής Νοημοσύνης</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="pdfDiagnosis" style="font-size: 22px; font-weight: bold;"></div>
+                    <div style="font-size: 16px; color: #495057;">Επίπεδο Σιγουριάς (AI Confidence): <strong id="pdfConfidence" style="font-size: 18px; color: #204051;"></strong></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-bottom: 40px;">
+                <div style="flex: 1;">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #204051;">Αρχική Ακτινογραφία</div>
+                    <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 10px; background: white;">
+                        <img id="pdfOriginalImage" src="" style="width: 100%; border-radius: 4px; display: block;">
+                    </div>
+                </div>
+                <!-- Heatmap (Ορατό μόνο σε πνευμονία) -->
+                <div style="flex: 1;" id="pdfHeatmapContainer">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #204051;">Σημεία Εστίασης (Grad-CAM Heatmap)</div>
+                    <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 10px; background: white;">
+                        <img id="pdfHeatmapImage" src="" style="width: 100%; border-radius: 4px; display: block;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 11px; color: #6c757d; text-align: justify; line-height: 1.6;">
+                <strong style="color: #e63946;">Ιατρική Αποποίηση Ευθύνης (Medical Disclaimer):</strong> Το παρόν έγγραφο παράγεται αυτόματα από σύστημα υπολογιστικής όρασης (AI) και αποτελεί προσωπικό project. Προορίζεται αποκλειστικά για ερευνητικούς ή υποστηρικτικούς σκοπούς. Δεν αποτελεί επισήμανση διάγνωσης, δεν έχει καμία νομική ή διαγνωστική ισχύ και δεν υποκαθιστά σε καμία περίπτωση την αξιολόγηση και τη γνωμάτευση από ειδικευμένο Ιατρό Ακτινολόγο. Απαιτείται ιατρική επιβεβαίωση κάθε κλινικού ευρήματος από επαγγελματία υγείας.
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden PDF Template -->
+    <div style="display: none;">
+        <div id="pdfTemplate" style="padding: 40px; padding-bottom: 60px; font-family: 'Inter', sans-serif; color: #333; background: white; width: 800px;">
+            <div style="border-bottom: 2px solid #204051; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 style="color: #204051; margin: 0; font-size: 24px;">Chest X-Ray Diagnostics AI</h1>
+                    <div style="color: #6c757d; font-size: 14px; margin-top: 5px;">Αναφορά Αυτοματοποιημένης Ανάλυσης Οπτικών Δεδομένων</div>
+                </div>
+                <div style="text-align: right; font-size: 12px; color: #6c757d; line-height: 1.5;">
+                    <div><strong>Ημερομηνία:</strong> <span id="pdfDate"></span></div>
+                    <div><strong>Αρχείο:</strong> <span id="pdfFilename"></span></div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef;">
+                <h2 style="margin-top: 0; font-size: 14px; color: #6c757d; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Πόρισμα Τεχνητής Νοημοσύνης</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="pdfDiagnosis" style="font-size: 22px; font-weight: bold;"></div>
+                    <div style="font-size: 16px; color: #495057;">Επίπεδο Σιγουριάς (AI Confidence): <strong id="pdfConfidence" style="font-size: 18px; color: #204051;"></strong></div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-bottom: 40px;">
+                <div style="flex: 1;">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #204051;">Αρχική Ακτινογραφία</div>
+                    <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 10px; background: white;">
+                        <img id="pdfOriginalImage" src="" style="width: 100%; border-radius: 4px; display: block;">
+                    </div>
+                </div>
+                <!-- Heatmap (Ορατό μόνο σε πνευμονία) -->
+                <div style="flex: 1;" id="pdfHeatmapContainer">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #204051;">Σημεία Εστίασης (Grad-CAM Heatmap)</div>
+                    <div style="border: 2px solid #dee2e6; border-radius: 8px; padding: 10px; background: white;">
+                        <img id="pdfHeatmapImage" src="" style="width: 100%; border-radius: 4px; display: block;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 11px; color: #6c757d; text-align: justify; line-height: 1.6;">
+                <strong style="color: #e63946;">Ιατρική Αποποίηση Ευθύνης (Medical Disclaimer):</strong> Το παρόν έγγραφο παράγεται αυτόματα από σύστημα υπολογιστικής όρασης (AI) και αποτελεί προσωπικό project. Προορίζεται αποκλειστικά για ερευνητικούς ή υποστηρικτικούς σκοπούς. Δεν αποτελεί επισήμανση διάγνωσης, δεν έχει καμία νομική ή διαγνωστική ισχύ και δεν υποκαθιστά σε καμία περίπτωση την αξιολόγηση και τη γνωμάτευση από ειδικευμένο Ιατρό Ακτινολόγο. Απαιτείται ιατρική επιβεβαίωση κάθε κλινικού ευρήματος από επαγγελματία υγείας.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('imageInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const selectedFileName = document.getElementById('selectedFileName');
+        const fileNameText = document.getElementById('fileNameText');
+
+        // Drag & Drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        function formatFileName(filename) {
+            if (filename.length > 20) {
+                return filename.substring(0, 10) + '...' + filename.substring(filename.length - 7);
+            }
+            return filename;
+        }
+
+        let currentSessionPin = null;
+
+        function closeAuthModal() {
+            document.getElementById('authModal').style.display = "none";
+            document.getElementById('doctorPin').value = "";
+            document.getElementById('pinError').style.display = "none";
+        }
+
+        async function submitPin() {
+            const pinInput = document.getElementById('doctorPin').value;
+            const errorDiv = document.getElementById('pinError');
+            
+            // Κάνουμε μια "κρυφή" κλήση για να δούμε αν το PIN είναι σωστό
+            errorDiv.style.display = "none";
+            try {
+                const response = await fetch('/history?pin=' + pinInput);
+                const result = await response.json();
+                
+                if (result.status === "unauthorized") {
+                    errorDiv.style.display = "block";
+                    errorDiv.textContent = result.message || "Λάθος Κωδικός.";
+                } else if (result.status === "success") {
+                    // Επιτυχία! Αποθηκεύουμε το PIN για αυτή τη συνεδρία
+                    currentSessionPin = pinInput;
+                    closeAuthModal();
+                    
+                    // Ανοίγουμε το ιστορικό και περνάμε τα δεδομένα που ήδη κατεβάσαμε
+                    const historyModal = document.getElementById('historyModal');
+                    historyModal.style.display = "flex";
+                    renderHistoryTable(result.data);
+                }
+            } catch (err) {
+                errorDiv.style.display = "block";
+                errorDiv.textContent = "Σφάλμα Επικοινωνίας.";
+            }
+        }
+
+        function toggleHistoryModal() {
+            const modal = document.getElementById('historyModal');
+            if (modal.style.display === "flex") {
+                modal.style.display = "none";
+            } else {
+                // Έλεγχος πρόσβασης πριν ανοίξει
+                if (currentSessionPin === null) {
+                    document.getElementById('authModal').style.display = "flex";
+                } else {
+                    modal.style.display = "flex";
+                    loadHistory();
+                }
+            }
+        }
+
+        async function loadHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"><div class="spinner" style="width:25px;height:25px;border-width:2px;margin: 20px auto;"></div></td></tr>';
+            
+            try {
+                const response = await fetch('/history?pin=' + currentSessionPin);
+                const result = await response.json();
+                
+                if (result.status === "success") {
+                    renderHistoryTable(result.data);
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--error-red);">Η συνεδρία έληξε. Δοκιμάστε ξανά.</td></tr>';
+                    currentSessionPin = null; // Ακύρωση PIN
+                }
+            } catch (error) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--error-red);">Σφάλμα φόρτωσης δικτύου κατά την ανάκτηση ιστορικού.</td></tr>';
+            }
+        }
+
+        function renderHistoryTable(dataArray) {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = "";
+            if (dataArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-gray);padding:30px;">Δεν υπάρχουν ακόμα εγγεγραμμένες εξετάσεις.</td></tr>';
+                return;
+            }
+            
+            dataArray.forEach(row => {
+                const isPneumonia = row.prediction === 'Pneumonia';
+                const badgeClass = isPneumonia ? 'status-danger' : 'status-safe';
+                const lbl = isPneumonia ? 'Ενδείξεις Πν.' : 'Φυσιολογικό';
+                const heatmapIcon = (row.has_heatmap && isPneumonia) ? '<i class="fa-solid fa-check" style="color:var(--success-green);"></i> Ενεργό' : '<span style="color:var(--text-gray);">-</span>';
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="white-space:nowrap;">${row.timestamp}</td>
+                    <td style="font-family: monospace; font-size: 13px;" title="${row.filename}">${formatFileName(row.filename)}</td>
+                    <td><span class="status-badge ${badgeClass}">${lbl}</span></td>
+                    <td style="font-weight: 600;">${(row.confidence * 100).toFixed(1)}%</td>
+                    <td>${heatmapIcon}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function clearHistory() {
+            if (!confirm("ΠΡΟΣΟΧΗ: Είστε σίγουροι ότι θέλετε να διαγράψετε ΜΟΝΙΜΑ όλο το ιστορικό αναλύσεων;")) return;
+            
+            const pin = document.getElementById('doctorPin').value || "1234";
+            try {
+                const resp = await fetch(`/delete-history?pin=${pin}`, { method: 'POST' });
+                const result = await resp.json();
+                if (result.status === 'success') {
+                    alert(result.message);
+                    renderHistoryTable([]);
+                } else {
+                    alert(result.message);
+                }
+            } catch (err) {
+                alert("Σφάλμα κατά τη διαγραφή.");
+            }
+        }
+
+        function getBorderlineWarning(confidence) {
+            if (confidence < 0.25) {
+                return `
+                <div style="background: rgba(244,162,97,0.1); border: 1px solid #f4a261; border-radius: 8px; padding: 12px; margin-bottom: 25px; display: flex; gap: 10px; align-items: start; text-align: left;">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: #f4a261; font-size: 18px; margin-top: 2px;"></i>
+                    <div>
+                        <div style="color: #f4a261; font-weight: 700; font-size: 13px; margin-bottom: 3px;">BORDERLINE ANALYSIS WARNING</div>
+                        <div style="color: #6a7c85; font-size: 12px; line-height: 1.4;">The AI score is very close to the threshold, indicating high ambiguity. **Manual specialist review is essential.**</div>
+                    </div>
+                </div>`;
+            }
+            return "";
+        }
+
+        function handleDicomSelect() {
+            const input = document.getElementById('dicomInput');
+            const btn = document.getElementById('dicomAnalyzeBtn');
+            const fileNameDiv = document.getElementById('dicomFileName');
+            const fileNameText = document.getElementById('dicomFileNameText');
+            if (input.files.length > 0) {
+                fileNameText.textContent = input.files[0].name;
+                fileNameDiv.style.display = 'block';
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            }
+        }
+
+        async function uploadDicom() {
+            const input = document.getElementById('dicomInput');
+            const btn = document.getElementById('dicomAnalyzeBtn');
+            const metaPanel = document.getElementById('dicomMetaPanel');
+            const metaContent = document.getElementById('dicomMetaContent');
+            const resultPanel = document.getElementById('dicomResultPanel');
+            const loader = document.getElementById('loader');
+
+            if (!input.files.length) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analysing...';
+            loader.style.display = 'flex';
+            metaPanel.style.display = 'none';
+            resultPanel.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+
+            try {
+                const response = await fetch('/predict-dicom', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                loader.style.display = 'none';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-radiation"></i> Analyse DICOM File';
+
+                // Show Metadata
+                if (data.metadata) {
+                    const labels = {
+                        PatientName: 'Patient Name', PatientAge: 'Patient Age',
+                        PatientSex: 'Sex', StudyDate: 'Study Date',
+                        Modality: 'Modality', InstitutionName: 'Institution',
+                        StudyDescription: 'Study Description'
+                    };
+                    metaContent.innerHTML = '';
+                    Object.entries(data.metadata).forEach(([k, v]) => {
+                        if (v && v !== 'N/A') {
+                            metaContent.innerHTML += `
+                                <div style="background: rgba(91,192,222,0.07); border-radius: 6px; padding: 8px 10px;">
+                                    <div style="font-size: 10px; color: #5bc0de; font-weight: 600; text-transform: uppercase; margin-bottom: 2px;">${labels[k] || k}</div>
+                                    <div style="color: #c8dce8; font-size: 13px;">${v}</div>
+                                </div>`;
+                        }
+                    });
+                    if (metaContent.innerHTML) metaPanel.style.display = 'block';
+                }
+
+                // Show Result
+                if (data.prediction === 'Άσχετη Εικόνα') {
+                    resultPanel.style.display = 'block';
+                    resultPanel.innerHTML = `
+                        <div style="background: rgba(217,48,37,0.1); border: 1px solid rgba(217,48,37,0.4); border-radius:8px; padding:15px; color:#ff8a80; display:flex; gap:12px; align-items:center;">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size:22px;"></i>
+                            <div><strong>Processing Error</strong><br><span style="font-size:13px;">${data.error_msg || 'Could not process DICOM file.'}</span></div>
+                        </div>`;
+                    return;
+                }
+
+                const isPn = data.prediction === 'Pneumonia';
+                const rawConf = parseFloat(data.confidence);
+                const confPct = (!isNaN(rawConf) && rawConf > 0) ? (rawConf * 100).toFixed(1) : '0.0';
+                const boxBg = isPn ? 'rgba(217,48,37,0.15)' : 'rgba(15,130,67,0.15)';
+                const borderClr = isPn ? '#e63946' : '#2a9d8f';
+                const labelClr = isPn ? '#ff8a80' : '#52d9a0';
+                const diagLabel = isPn ? 'PNEUMONIA DETECTED' : 'NORMAL FINDING';
+
+                resultPanel.style.display = 'block';
+                const warningHtml = getBorderlineWarning(rawConf);
+                resultPanel.innerHTML = `
+                    <div style="border-top: 1px solid #2a4a6a; margin-bottom: 15px;"></div>
+                    ${warningHtml}
+                    <div style="background:${boxBg}; border: 1.5px solid ${borderClr}; border-radius:10px; padding:15px 18px; margin-bottom:15px;">
+                        <div style="font-size: 18px; font-weight: 700; color:${labelClr};">${diagLabel}</div>
+                        <div style="font-size: 13px; color: #8ab4c8; margin-top:4px;">AI Confidence: <strong style="color:${labelClr};">${confPct}%</strong></div>
+                        <div style="margin-top:10px; background: rgba(255,255,255,0.08); border-radius:4px; height:6px; overflow:hidden;">
+                            <div style="width:${confPct}%; height:100%; background:${borderClr}; border-radius:4px;"></div>
+                        </div>
+                    </div>
+                    ${isPn && data.heatmap ? `
+                    <div style="display:flex; gap:15px; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:130px;">
+                            <div style="font-size:12px; color:#8ab4c8; margin-bottom:6px;">Original X-Ray (from DICOM)</div>
+                            <div style="border:1px solid #2a4a6a; border-radius:8px; overflow:hidden;">
+                                <img src="${data.original_image}" style="width:100%; display:block;" alt="DICOM image preview">
+                            </div>
+                        </div>
+                        <div style="flex:1; min-width:130px;">
+                            <div style="font-size:12px; color:#5bc0de; font-weight:600; margin-bottom:6px;"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Focus Map (Grad-CAM)</div>
+                            <div style="border:1px solid #2a4a6a; border-radius:8px; overflow:hidden; margin-bottom: 8px;">
+                                <img src="${data.heatmap}" style="width:100%; display:block;" alt="Heatmap">
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 5px;">
+                                <span style="font-size: 10px; color: #8ab4c8; font-weight: 500;">Low</span>
+                                <div style="flex-grow: 1; height: 6px; background: linear-gradient(to right, #000080, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000, #800000); border-radius: 10px;"></div>
+                                <span style="font-size: 10px; color: #8ab4c8; font-weight: 500;">High Importance</span>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div style="margin-top:12px; padding:10px; border:1px solid #1a4a6a; border-radius:6px; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="color:#f4a261; font-size:14px;"></i>
+                        <span style="font-size:12px; color:#8ab4c8;">Medical confirmation required — AI-generated analysis only.</span>
+                    </div>`;
+
+            } catch(err) {
+                loader.style.display = 'none';
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-radiation"></i> Analyse DICOM File';
+                alert('Network error during DICOM analysis: ' + err.message);
+            }
+        }
+
+        function handleFileSelect() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileNameText.textContent = file.name;
+                selectedFileName.style.display = 'block';
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        async function uploadImage() {
+            const resultCard = document.getElementById('resultCard');
+            const loader = document.getElementById('loader');
+
+            if (fileInput.files.length === 0) return;
+
+            const formData = new FormData();
+            const file = fileInput.files[0];
+            formData.append("file", file);
+
+            // Show UI Loader
+            loader.style.display = "flex";
+            resultCard.style.display = "none";
+            resultCard.className = "card"; // Reset classes
+            
+            // Scroll to top to focus on loader
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+
+                // Cache data globally for PDF parsing
+                if (data.prediction !== "Άσχετη Εικόνα") {
+                    currentReportData = data;
+                    currentReportFileUrl = URL.createObjectURL(file);
+                    currentReportFilename = file.name;
+                }
+                
+                // Keep loader for a minimum of 800ms for psychological effect
+                setTimeout(() => {
+                    loader.style.display = "none";
+                    showResult(data, file);
+                    // Scroll to result smoothly
+                    setTimeout(() => resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+                }, 800);
+
+            } catch (error) {
+                console.error("Σφάλμα:", error);
+                loader.style.display = "none";
+                alert("Παρουσιάστηκε σφάλμα συνδεσιμότητας με τον διακομιστή.");
+            }
+        }
+
+        function showResult(data, imageFile) {
+            const resultCard = document.getElementById('resultCard');
+            resultCard.style.display = 'block';
+            
+            // 1. Error / Irrelevant Image
+            if (data.prediction === "Άσχετη Εικόνα") {
+                resultCard.className = "card is-error";
+                resultCard.innerHTML = `
+                    <div class="alert">
+                        <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+                        <div class="alert-content">
+                            <h3>Σφάλμα Ταυτοποίησης</h3>
+                            <p>${data.error_msg}</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // 2. Successful Analysis
+            const isPneumonia = data.prediction === 'Pneumonia';
+            const themeClass = isPneumonia ? 'is-pneumonia' : 'is-normal';
+            
+            const diagnosisText = isPneumonia ? 'Ενδείξεις Πνευμονίας' : 'Φυσιολογικό Εύρημα';
+            const iconClass = isPneumonia ? 'fa-lungs-virus' : 'fa-lungs';
+            const badgeText = 'Απαιτείται ιατρική επιβεβαίωση';
+            
+            // Convert to percentage and cap at 99.9% for realism
+            let confPercent = (data.confidence * 100).toFixed(1);
+            if(confPercent === "100.0") confPercent = "99.9";
+
+            let imagesHtml = '';
+            // Το Heatmap εμφανίζεται ΜΟΝΟ αν βρεθεί πνευμονία.
+            if (isPneumonia && data.heatmap && data.heatmap !== "") {
+                imagesHtml = `
+                    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px;">
+                        <div class="result-image-container" style="margin: 0; box-shadow: none; border: none;">
+                            <div style="font-size: 13px; color: var(--text-gray); margin-bottom: 8px;">Αρχική Εικόνα</div>
+                            <img src="${URL.createObjectURL(imageFile)}" class="analyzed-image" style="border-radius: 8px; border: 1px solid var(--border-gray); box-shadow: var(--shadow-subtle);" alt="Αρχική Ακτινογραφία">
+                        </div>
+                        <div class="result-image-container" style="margin: 0; box-shadow: none; border: none; width: 100%; max-width: 350px;">
+                            <div style="font-size: 13px; color: var(--primary-blue); font-weight: 600; margin-bottom: 5px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Σημεία Εστίασης ΑΙ (Heatmap)</div>
+                            
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; padding: 0 5px;">
+                                <span style="font-size: 10px; color: var(--text-gray); font-weight: 500;">Χαμηλή</span>
+                                <div style="flex-grow: 1; height: 6px; background: linear-gradient(to right, #000080, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000, #800000); border-radius: 10px;"></div>
+                                <span style="font-size: 10px; color: var(--text-gray); font-weight: 500;">Υψηλή Σημασία</span>
+                            </div>
+
+                            <img src="${data.heatmap}" class="analyzed-image" style="border-radius: 8px; border: 1px solid var(--border-gray); box-shadow: var(--shadow-subtle); width: 100%;" alt="Ανάλυση Grad-CAM AI">
+                        </div>
+                    </div>
+                `;
+            } else {
+                imagesHtml = `
+                    <div class="result-image-container">
+                        <img src="${URL.createObjectURL(imageFile)}" class="analyzed-image" alt="Αναλυμένη Ακτινογραφία">
+                    </div>
+                `;
+            }
+
+            resultCard.className = `card ${themeClass}`;
+            const warningHtml = getBorderlineWarning(data.confidence);
+            
+            resultCard.innerHTML = `
+                ${warningHtml}
+                ${imagesHtml}
+                
+                <div class="diagnosis-badge">
+                    <i class="fa-solid fa-circle-exclamation"></i> ${badgeText}
+                </div>
+                
+                <h2 class="diagnosis-text"><i class="fa-solid ${iconClass}"></i> ${diagnosisText}</h2>
+                
+                <div class="confidence-container" style="margin-top: 30px;">
+                    <div class="confidence-label">
+                        <span>Σιγουριά AI Μοντέλου</span>
+                        <span style="font-weight: 700;">${confPercent}%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="confBar"></div>
+                    </div>
+                </div>
+                
+                <button class="btn" style="margin-top: 25px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 15px;" onclick="downloadPDF()">
+                    <i class="fa-solid fa-file-pdf"></i> Εξαγωγή Αναφοράς PDF
+                </button>
+            `;
+
+            // Trigger animation for progress bar
+            setTimeout(() => {
+                document.getElementById('confBar').style.width = `${confPercent}%`;
+            }, 50);
+        }
+
+        // Μετατρέπει URL (blob ή κανονικό) σε base64 string
+        function urlToBase64(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    resolve(canvas.toDataURL('image/jpeg', 0.95));
+                };
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        async function downloadPDF() {
+            if (!currentReportData) return;
+
+            const btn = document.querySelector('[onclick="downloadPDF()"]');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...'; }
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+                const isPneumonia = currentReportData.prediction === 'Pneumonia';
+                const now = new Date().toLocaleString('en-GB');
+                const pgW = 210;
+                const margin = 15;
+                const contentW = pgW - 2 * margin;
+                let y = 15;
+
+                // HEADER BAR
+                doc.setFillColor(32, 64, 81);
+                doc.rect(0, 0, pgW, 28, 'F');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.setTextColor(255, 255, 255);
+                doc.text('Chest X-Ray AI Diagnostic', margin, 12);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(9);
+                doc.setTextColor(190, 210, 220);
+                doc.text('Automated Chest X-Ray Analysis & Imaging Report', margin, 18);
+
+                doc.setFontSize(8);
+                doc.setTextColor(190, 210, 220);
+                doc.text('Date: ' + now, pgW - margin, 12, { align: 'right' });
+                doc.text('File: ' + (currentReportFilename || 'N/A'), pgW - margin, 18, { align: 'right' });
+
+                y = 38;
+
+                // DIAGNOSIS BOX
+                const boxColor = isPneumonia ? [252, 232, 230] : [230, 244, 234];
+                const textColor = isPneumonia ? [217, 48, 37] : [15, 130, 67];
+                const borderColor = isPneumonia ? [217, 48, 37] : [15, 130, 67];
+
+                doc.setFillColor(...boxColor);
+                doc.setDrawColor(...borderColor);
+                doc.setLineWidth(0.5);
+                doc.roundedRect(margin, y, contentW, 22, 3, 3, 'FD');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(15);
+                doc.setTextColor(...textColor);
+                doc.text(isPneumonia ? 'PNEUMONIA DETECTED' : 'NORMAL FINDING', margin + 5, y + 9);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(70, 70, 70);
+                const confVal = (currentReportData.confidence * 100).toFixed(1);
+                doc.text('AI Confidence Level: ' + confVal + '%', margin + 5, y + 17);
+
+                y += 30;
+
+                // CONFIDENCE PROGRESS BAR
+                doc.setFontSize(9);
+                doc.setTextColor(100, 100, 100);
+                doc.text('AI Model Confidence', margin, y);
+                doc.text(confVal + '%', pgW - margin, y, { align: 'right' });
+                y += 3;
+
+                doc.setFillColor(220, 220, 220);
+                doc.roundedRect(margin, y, contentW, 4, 1, 1, 'F');
+                doc.setFillColor(...textColor);
+                doc.roundedRect(margin, y, contentW * (parseFloat(confVal) / 100), 4, 1, 1, 'F');
+                y += 12;
+
+                // IMAGES
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(32, 64, 81);
+
+                if (isPneumonia && currentReportData.heatmap && currentReportData.heatmap !== '') {
+                    const imgW = (contentW - 8) / 2;
+                    const imgH = imgW * 0.85;
+
+                    doc.text('Original X-Ray', margin, y);
+                    doc.text('AI Focus Map (Grad-CAM Heatmap)', margin + imgW + 8, y);
+                    y += 4;
+
+                    try {
+                        const origB64 = await urlToBase64(currentReportFileUrl);
+                        doc.addImage(origB64, 'JPEG', margin, y, imgW, imgH);
+                    } catch(e) { doc.text('[Image Error]', margin, y + 10); }
+
+                    try {
+                        doc.addImage(currentReportData.heatmap, 'JPEG', margin + imgW + 8, y, imgW, imgH);
+                    } catch(e) { doc.text('[Heatmap Error]', margin + imgW + 8, y + 10); }
+
+                    y += imgH + 5;
+
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 100, 100);
+                    doc.text('Heatmap Legend: Low Attention  ->  High Attention (Red)', margin + imgW + 8, y);
+                    y += 8;
+
+                } else {
+                    const imgW = contentW * 0.6;
+                    const imgH = imgW * 0.85;
+                    const imgX = margin + (contentW - imgW) / 2;
+
+                    doc.text('Original X-Ray', pgW / 2, y, { align: 'center' });
+                    y += 4;
+
+                    try {
+                        const origB64 = await urlToBase64(currentReportFileUrl);
+                        doc.addImage(origB64, 'JPEG', imgX, y, imgW, imgH);
+                    } catch(e) { doc.text('[Image Error]', imgX, y + 10); }
+
+                    y += imgH + 8;
+                }
+
+                // DISCLAIMER
+                doc.setDrawColor(220, 220, 220);
+                doc.setLineWidth(0.3);
+                doc.line(margin, y, pgW - margin, y);
+                y += 5;
+
+                doc.setFontSize(7.5);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(180, 0, 0);
+                doc.text('Medical Disclaimer:', margin, y);
+                y += 4;
+
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(100, 100, 100);
+                const disclaimer = 'This document is generated automatically by an AI-based computer vision system and is intended solely for research or supportive purposes. It does not constitute an official medical diagnosis, has no legal or diagnostic validity, and does not replace the assessment and opinion of a qualified Radiologist. Medical confirmation by a licensed healthcare professional is required for any clinical finding.';
+                const disclaimerLines = doc.splitTextToSize(disclaimer, contentW);
+                doc.text(disclaimerLines, margin, y);
+
+                // FOOTER
+                doc.setFontSize(7);
+                doc.setTextColor(170, 170, 170);
+                doc.text('Chest X-Ray AI Diagnostic  |  Research Demo Project', pgW / 2, 290, { align: 'center' });
+
+                const filename = 'Chest_XRay_Report_' + (currentReportFilename || 'scan').split('.')[0] + '.pdf';
+                doc.save(filename);
+
+            } catch(err) {
+                console.error('PDF Error:', err);
+                alert('PDF generation error: ' + err.message);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Export PDF Report'; }
+            }
+        }
+    </script>
+</body>
+</html>
