@@ -21,6 +21,10 @@ The repository includes the complete Jupyter Notebook (`chest-x-ray-code.ipynb`)
 * Implementation of Transfer Learning natively on the MobileNetV2 architecture.
 * Training history, metric visualizations (Accuracy, Validation Loss), and model evaluation.
 
+## Dataset
+The model was trained using the **Chest X-Ray Images (Pneumonia)** dataset, available on Kaggle. It contains thousands of validated labeled images (Normal vs. Pneumonia) for medical AI research.
+*   **Source:** [Kaggle - Chest X-Ray Images (Pneumonia)](https://www.kaggle.com/datasets/paultimothymooney/chest-x-ray-pneumonia)
+
 ## Technology Stack
 
 * **Backend Development:** FastAPI, Python 3.12, Uvicorn
