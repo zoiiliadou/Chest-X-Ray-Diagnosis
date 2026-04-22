@@ -61,4 +61,4 @@ docker run -p 7860:7860 medical-xray-ai
 
 ## Security & Medical Legal Disclaimer
 
-**Disclaimer:** This software architecture is designed strictly as an academic and research diagnostic assistant. It is not intended to replace professional medical advice, clinical diagnosis, or human treatment execution. Always verify automated findings with a physician or independently qualified healthcare provider.
+**Disclaimer:** This software architecture is designed strictly as a personal project. It is not intended to replace professional medical advice, clinical diagnosis, or human treatment execution. Always verify automated findings with a physician or independently qualified healthcare provider.
